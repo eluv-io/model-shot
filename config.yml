@@ -1,0 +1,5 @@
+storage:
+  transnet_path: models/shot/transnetv2/torch_transnetv2.pth
+  test_card_path: models/shot/test_card
+
+device: cuda
