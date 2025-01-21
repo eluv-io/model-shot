@@ -27,7 +27,7 @@ def run(video_paths: List[str], runtime_config: str=None) -> None:
         tags = shot_detector.tag(fname)
         if len(tags) == 0:
             continue
-        out_fname = os.path.join(tags_out, f"{os.path.basename(fname).split('.')[0]}_tags.json")
+        out_fname = os.path.join(tags_out, f"{os.path.basename(fname)}_tags.json")
         with open(out_fname, 'w') as f:
             f.write(json.dumps([asdict(tag) for tag in tags]))
             

@@ -5,7 +5,7 @@ WORKDIR /elv
 RUN apt-get update && apt-get install -y build-essential && apt-get install -y ffmpeg
 
 RUN \
-   conda create -n shot python=3.7.16 -y
+   conda create -n shot python=3.8 -y
 
 SHELL ["conda", "run", "-n", "shot", "/bin/bash", "-c"]
 
