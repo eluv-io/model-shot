@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 echo keys:
 
 if ! ssh-add -l ; then
@@ -14,6 +16,7 @@ echo
 SCRIPT_PATH="$(dirname "$(realpath "$0")")"
 MODEL_PATH=$(yq -r .storage.model_path $SCRIPT_PATH/config.yml)
 
-rsync --progress --update --times --recursive --links --delete $MODEL_PATH/ $SCRIPT_PATH/models/
+mkdir -p models
+rsync --progress --update --times --recursive --links --delete $MODEL_PATH/ $SCRIPT_PATH/models/shot/
 
 podman build --format docker -t shot . --network host --build-arg SSH_AUTH_SOCK=/tmp/ssh-auth-sock --volume "${SSH_AUTH_SOCK}:/tmp/ssh-auth-sock"
