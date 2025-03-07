@@ -5,17 +5,12 @@ WORKDIR /elv
 RUN apt-get update && apt-get install -y build-essential && apt-get install -y ffmpeg
 
 RUN \
-   conda create -n shot python=3.8 -y
+   conda create -n tagenv python=3.8 -y
 
-SHELL ["conda", "run", "-n", "shot", "/bin/bash", "-c"]
+SHELL ["conda", "run", "-n", "tagenv", "/bin/bash", "-c"]
 
 RUN \
     conda install -y cudatoolkit=10.1 cudnn=7 nccl 
-
-COPY shot ./shot
-COPY config.yml run.py setup.py config.py .
-
-COPY models ./models
 
 # Create the SSH directory and set correct permissions
 RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
@@ -26,6 +21,14 @@ RUN ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 ARG SSH_AUTH_SOCK
 ENV SSH_AUTH_SOCK ${SSH_AUTH_SOCK}
 
-RUN /opt/conda/envs/shot/bin/pip install .
+COPY models ./models
 
-ENTRYPOINT ["/opt/conda/envs/shot/bin/python", "run.py"]
+COPY setup.py .
+RUN mkdir -p shot
+
+RUN /opt/conda/envs/tagenv/bin/pip install .
+
+COPY shot ./shot
+COPY config.yml run.py config.py .
+
+ENTRYPOINT ["/opt/conda/envs/tagenv/bin/python", "run.py"]
