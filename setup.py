@@ -22,6 +22,7 @@ setup(
             'argparse==1.4.0',
             'facenet_pytorch==2.5.2',
             'ujson',
+            'setproctitle',
             'mxnet-cu101==1.8.0',
             'common_ml @ git+ssh://git@github.com/qluvio/common-ml.git#egg=common_ml',
             'quick_test_py @ git+https://github.com/elv-nickB/quick_test_py.git#egg=quick_test_py'

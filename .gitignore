@@ -1,2 +1,4 @@
+models/*
+.cache-ro
 tags/*
 test_output/*

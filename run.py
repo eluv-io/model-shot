@@ -4,7 +4,7 @@ import os
 import json
 from dataclasses import asdict, dataclass
 from common_ml.types import Data
-
+import setproctitle
 from shot.model import ShotDetector
 from config import config
 
@@ -32,6 +32,7 @@ def run(video_paths: List[str], runtime_config: str=None) -> None:
             f.write(json.dumps([asdict(tag) for tag in tags]))
             
 if __name__ == '__main__':
+    setproctitle.setproctitle('model-shot')    
     parser = argparse.ArgumentParser()
     parser.add_argument('video_paths', nargs='+', type=str)
     parser.add_argument('--config', type=str, default=None)
