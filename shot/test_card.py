@@ -51,7 +51,7 @@ class TestCardClassifier:
         # feature extractor
         self.feature_extractor = _FeatureExtractor()
         path_to_model = os.path.join(model_dir, "feature_extractor.pth")
-        self.feature_extractor.load_state_dict(torch.load(path_to_model, map_location=torch.device('cpu')))
+        self.feature_extractor.load_state_dict(torch.load(path_to_model, map_location=torch.device(device)))
         self.feature_extractor.to(device)
         self.feature_extractor.eval()
 

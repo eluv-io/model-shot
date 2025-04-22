@@ -10,11 +10,19 @@ from common_ml.model import VideoModel
 from .transnet import TransNetV2
 from .test_card import TestCardClassifier
 
+import torch
+
 class ShotDetector(VideoModel):
     shot_types = ["black", "test card"]
 
     def __init__(self, transnet_path: str, test_card_dir: str):
-        device = config['device']
+        if torch.cuda.is_available():
+            logger.info("cuda is available, using it")
+            device = "cuda"
+        else:
+            logger.warning("cuda not available, using cpu (still faster than realtime)")
+            device = "cpu"
+
         self.transnet = TransNetV2(transnet_path, device=device)
         self.test_card_classifier = TestCardClassifier(device, test_card_dir, n_frames=4)
 
