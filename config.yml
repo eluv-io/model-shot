@@ -4,3 +4,7 @@ storage:
   test_card_path: models/shot/test_card
 
 device: cpu
+
+runtime:
+  default:
+    contiguous: false
