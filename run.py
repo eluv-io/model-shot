@@ -18,7 +18,7 @@ class RuntimeConfig:
 
 def make_tag_fn(cfg: RuntimeConfig) -> Callable:
 
-    model = ShotDetector(config["storage"]["transnet_path"], config["storage"]["test_card_path"])
+    model = ShotDetector(config["storage"]["transnet_path"], contiguous=cfg.contiguous)
     tags_out = os.getenv('TAGS_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tags'))
     if not os.path.exists(tags_out):
         os.makedirs(tags_out)

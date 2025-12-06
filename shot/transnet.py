@@ -4,6 +4,7 @@ import torch.nn.functional as functional
 import numpy as np
 import random
 import cv2
+from typing import List
 
 class TransNetV2:
 
@@ -65,32 +66,11 @@ class TransNetV2:
         cap.release()
         return (video, *self.predict_frames(torch.tensor(video).to(torch.uint8)))
 
-    @staticmethod
-    def predictions_to_scenes(predictions: torch.Tensor, threshold: float = 0.5):
-        predictions = (predictions > threshold).to(torch.uint8)
-
-        scenes = []
-        t, t_prev, start = -1, 0, 0
-        for i, t in enumerate(predictions):
-            if t_prev == 1 and t == 0:
-                start = i
-            if t_prev == 0 and t == 1 and i != 0:
-                scenes.append([start, i])
-            t_prev = t
-        if t == 0:
-            scenes.append([start, i])
-
-        # just fix if all predictions are 1
-        if len(scenes) == 0:
-            return torch.Tensor([[0, len(predictions) - 1]], dtype=torch.int32)
-
-        return torch.tensor(scenes, dtype=torch.int32)
-    
-    def predict_shots(self, path_to_video):
-        video, *predictions = self.predict_video(path_to_video)
+    def predict_shots(self, path_to_video) -> List[int]:
+        _, *predictions = self.predict_video(path_to_video)
         predictions = torch.max(*predictions)
-        shots = self.predictions_to_scenes(predictions)
-        return video, shots
+        predictions = (predictions > 0.5).to(torch.uint8)
+        return [idx for idx, val in enumerate(predictions) if val == 1]
 
 class TransNetV2Model(nn.Module):
 

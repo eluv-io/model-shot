@@ -3,19 +3,21 @@ import cv2
 from typing import List
 from loguru import logger
 
-from config import config
 from common_ml.tags import VideoTag
 from common_ml.model import VideoModel
 
 from .transnet import TransNetV2
-from .test_card import TestCardClassifier
 
 import torch
 
 class ShotDetector(VideoModel):
     shot_types = ["black", "test card"]
 
-    def __init__(self, transnet_path: str, test_card_dir: str):
+    def __init__(
+        self, 
+        transnet_path: str,
+        contiguous: bool
+    ):
         if torch.cuda.is_available():
             logger.info("cuda is available, using it")
             device = "cuda"
@@ -24,25 +26,48 @@ class ShotDetector(VideoModel):
             device = "cpu"
 
         self.transnet = TransNetV2(transnet_path, device=device)
-        self.test_card_classifier = TestCardClassifier(device, test_card_dir, n_frames=4)
 
-    def tag(self, video_path: str) -> List[VideoTag]:
-        logger.debug(f"Running shot detection on {video_path}")
+        self.last_fps = None
+        self.abs_curr_start = 0
+        self.abs_next_start = 0
+        self.contiguous = contiguous
+
+    def tag(self, fpath: str) -> List[VideoTag]:
+        logger.debug(f"Running shot detection on {fpath}")
+
         # get fps
-        cap = cv2.VideoCapture(video_path)
+        cap = cv2.VideoCapture(fpath)
         fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration_ms = (frame_count / fps) * 1000
+        print(frame_count, fps, duration_ms)
         cap.release()
 
-        # detect shot transition
-        _, shots = self.transnet.predict_shots(video_path)
-        shots = shots.cpu().numpy()
-        
-        frame_dur = (1 / fps) * 1000
-        return [VideoTag(
-                    start_time=float(shot[0] / fps) * 1000,
-                    end_time=float(shot[1] / fps) * 1000 + frame_dur,
-                    text="SHOT"
-                    ) for shot in shots
-                ]
-    def track(self) -> str:
-        return 'shot'
+        if fps != self.last_fps and self.last_fps is not None:
+            logger.warning(f"Video fps changed from {self.last_fps} to {fps}")
+            self.last_fps = fps
+
+        transition_idx = self.transnet.predict_shots(fpath)
+
+        res = []
+
+        for idx in transition_idx:
+            relative_end_ts = (idx / fps) * 1000
+            # might be from an earlier segment
+            relative_start_ts = self.abs_next_start - self.abs_curr_start
+
+            res.append(VideoTag(
+                text="",
+                start_time=relative_start_ts,
+                end_time=relative_end_ts,
+            ))
+
+            self.abs_next_start = relative_end_ts + self.abs_curr_start
+
+        if self.contiguous:
+            self.abs_curr_start += duration_ms
+        else:
+            self.abs_next_start = 0
+            self.abs_curr_start = 0
+
+        return res
