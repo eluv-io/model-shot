@@ -40,7 +40,6 @@ class ShotDetector(VideoModel):
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         duration_ms = (frame_count / fps) * 1000
-        print(frame_count, fps, duration_ms)
         cap.release()
 
         if fps != self.last_fps and self.last_fps is not None:
@@ -58,8 +57,8 @@ class ShotDetector(VideoModel):
 
             res.append(VideoTag(
                 text="",
-                start_time=relative_start_ts,
-                end_time=relative_end_ts,
+                start_time=int(relative_start_ts),
+                end_time=int(relative_end_ts),
             ))
 
             self.abs_next_start = relative_end_ts + self.abs_curr_start
