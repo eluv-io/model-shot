@@ -70,7 +70,31 @@ class TransNetV2:
         _, *predictions = self.predict_video(path_to_video)
         predictions = torch.max(*predictions)
         predictions = (predictions > 0.5).to(torch.uint8)
-        return [idx for idx, val in enumerate(predictions) if val == 1]
+        
+        # Collapse consecutive transitions into single shot boundaries
+        shot_boundaries = []
+        in_transition = False
+        transition_start = 0
+        
+        for idx, val in enumerate(predictions):
+            if val == 1 and not in_transition:
+                # Start of a new transition
+                in_transition = True
+                transition_start = idx
+            elif val == 0 and in_transition:
+                # End of transition, record the middle frame
+                transition_end = idx - 1
+                middle_frame = (transition_start + transition_end) // 2
+                shot_boundaries.append(middle_frame)
+                in_transition = False
+        
+        # Handle case where video ends during a transition
+        if in_transition:
+            transition_end = len(predictions) - 1
+            middle_frame = (transition_start + transition_end) // 2
+            shot_boundaries.append(middle_frame)
+        
+        return shot_boundaries
 
 class TransNetV2Model(nn.Module):
 
