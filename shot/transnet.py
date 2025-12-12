@@ -74,13 +74,11 @@ class TransNetV2:
         # Collapse consecutive transitions into single shot boundaries
         shot_boundaries = []
         in_transition = False
-        transition_start = 0
         
         for idx, val in enumerate(predictions):
             if val == 1 and not in_transition:
                 # Start of a new transition
                 in_transition = True
-                transition_start = idx
             elif val == 0 and in_transition:
                 # End of transition, record the last frame
                 shot_boundaries.append(idx - 1)

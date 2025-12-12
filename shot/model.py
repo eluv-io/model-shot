@@ -40,6 +40,7 @@ class ShotDetector(VideoModel):
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         duration_ms = (frame_count / fps) * 1000
+        frame_time = 1000 / fps
         cap.release()
 
         if fps != self.last_fps and self.last_fps is not None:
@@ -55,9 +56,16 @@ class ShotDetector(VideoModel):
             # might be from an earlier segment
             relative_start_ts = self.abs_next_start - self.abs_curr_start
 
+            start_time = int(relative_start_ts)+frame_time
+            end_time = int(relative_end_ts)
+
+            if start_time >= end_time:
+                # happens with black frames at the beginning
+                continue
+
             res.append(VideoTag(
                 text="",
-                start_time=int(relative_start_ts),
+                start_time=int(relative_start_ts)+frame_time,
                 end_time=int(relative_end_ts),
             ))
 
