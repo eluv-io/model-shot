@@ -82,17 +82,13 @@ class TransNetV2:
                 in_transition = True
                 transition_start = idx
             elif val == 0 and in_transition:
-                # End of transition, record the middle frame
-                transition_end = idx - 1
-                middle_frame = (transition_start + transition_end) // 2
-                shot_boundaries.append(middle_frame)
+                # End of transition, record the last frame
+                shot_boundaries.append(idx - 1)
                 in_transition = False
         
         # Handle case where video ends during a transition
         if in_transition:
-            transition_end = len(predictions) - 1
-            middle_frame = (transition_start + transition_end) // 2
-            shot_boundaries.append(middle_frame)
+            shot_boundaries.append(len(predictions) - 1)
         
         return shot_boundaries
 
