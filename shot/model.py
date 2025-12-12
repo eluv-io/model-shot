@@ -65,7 +65,7 @@ class ShotDetector(VideoModel):
 
             res.append(VideoTag(
                 text="",
-                start_time=int(relative_start_ts)+frame_time,
+                start_time=int(relative_start_ts+frame_time),
                 end_time=int(relative_end_ts),
             ))
 
