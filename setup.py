@@ -25,6 +25,6 @@ setup(
             'setproctitle',
             'dacite',
             'mxnet-cu101==1.8.0',
-            'common_ml @ git+https://git@github.com/eluv-io/common-ml.git#egg=common_ml',
+            'common_ml @ git+https://github.com/eluv-io/common-ml.git#egg=common_ml',
         ]
 )
