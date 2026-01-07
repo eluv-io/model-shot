@@ -25,7 +25,11 @@ def make_tag_fn(cfg: RuntimeConfig) -> Callable:
 
     def tag_fn(video_paths: List[str]) -> None:
         for fname in video_paths:
-            tags = model.tag(fname)
+            try:
+                tags = model.tag(fname)
+            except Exception as e:
+                print(f"Error processing {fname}: {e}")
+                continue
             if len(tags) == 0:
                 continue
             out_fname = os.path.join(tags_out, f"{os.path.basename(fname)}_tags.json")
