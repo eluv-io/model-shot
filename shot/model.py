@@ -3,14 +3,14 @@ import cv2
 from typing import List
 from loguru import logger
 
-from common_ml.tags import VideoTag
-from common_ml.model import VideoModel
+from common_ml.tagging.models.av import AVModel
+from common_ml.tagging.models.tag_types import Tag
 
 from .transnet import TransNetV2
 
 import torch
 
-class ShotDetector(VideoModel):
+class ShotDetector(AVModel):
     shot_types = ["black", "test card"]
 
     def __init__(
@@ -32,7 +32,7 @@ class ShotDetector(VideoModel):
         self.abs_next_start = 0
         self.contiguous = contiguous
 
-    def tag(self, fpath: str) -> List[VideoTag]:
+    def tag(self, fpath: str) -> List[Tag]:
         logger.debug(f"Running shot detection on {fpath}")
 
         # get fps
@@ -40,6 +40,7 @@ class ShotDetector(VideoModel):
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         duration_ms = (frame_count / fps) * 1000
+        print(duration_ms)
         frame_time = 1000 / fps
         cap.release()
 
@@ -63,8 +64,9 @@ class ShotDetector(VideoModel):
                 # happens with black frames at the beginning
                 continue
 
-            res.append(VideoTag(
-                text="",
+            res.append(Tag(
+                tag="",
+                source_media=fpath,
                 start_time=int(relative_start_ts+frame_time),
                 end_time=int(relative_end_ts),
             ))

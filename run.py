@@ -1,59 +1,34 @@
 import argparse
-from typing import List, Callable
 import os
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import setproctitle
 from dacite import from_dict
 
-from common_ml.model import run_live_mode
-from common_ml.utils import nested_update
+from common_ml.tagging.run_helpers import start_loop_from_av_model
 
 from shot.model import ShotDetector
 from config import config
 
 @dataclass
 class RuntimeConfig:
-    contiguous: bool
+    # if contiguous is False, then we tag each input file independently, 
+    # otherwise we assume input files are contiguous segments of a larger video and we allow shots to span across input files. 
+    contiguous: bool = True
 
-def make_tag_fn(cfg: RuntimeConfig) -> Callable:
-
-    model = ShotDetector(config["storage"]["transnet_path"], contiguous=cfg.contiguous)
-    tags_out = os.getenv('TAGS_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tags'))
-    if not os.path.exists(tags_out):
-        os.makedirs(tags_out)
-
-    def tag_fn(video_paths: List[str]) -> None:
-        for fname in video_paths:
-            try:
-                tags = model.tag(fname)
-            except Exception as e:
-                print(f"Error processing {fname}: {e}")
-                continue
-            if len(tags) == 0:
-                continue
-            out_fname = os.path.join(tags_out, f"{os.path.basename(fname)}_tags.json")
-            with open(out_fname, 'w') as f:
-                f.write(json.dumps([asdict(tag) for tag in tags]))
-
-    return tag_fn
+def _parse_config_string(config_str: str) -> RuntimeConfig:
+    config_dict = json.loads(config_str)
+    return from_dict(RuntimeConfig, config_dict)
 
 if __name__ == '__main__':
     setproctitle.setproctitle('model-shot')    
     parser = argparse.ArgumentParser()
-    parser.add_argument('video_paths', nargs='*', type=str, default=[])
-    parser.add_argument('--config', type=str, default=None)
-    parser.add_argument('--live', action='store_true', default=False)
+    parser.add_argument('--output-path', type=str, required=True, help='Path to save the output tags')
+    parser.add_argument('--params', type=str, default=None, help='JSON string of parameters to override the default config')
     args = parser.parse_args()
     
-    cfg_raw = json.loads(args.config) if args.config else {}
-    default_cfg = config["runtime"]["default"]
+    params = _parse_config_string(args.params) if args.params else RuntimeConfig()
 
-    runtime_cfg = from_dict(data_class=RuntimeConfig, data=nested_update(default_cfg, cfg_raw))
-    tag_fn = make_tag_fn(runtime_cfg)
+    model = ShotDetector(config["storage"]["transnet_path"], contiguous=params.contiguous)
 
-    if args.live:
-        print('Running in live mode...')
-        run_live_mode(tag_fn)
-    else:
-        tag_fn(args.video_paths)
+    start_loop_from_av_model(model, args.output_path)
